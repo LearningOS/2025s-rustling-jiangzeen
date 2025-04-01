@@ -7,6 +7,8 @@
 // Execute `rustlings hint from_into` or use the `hint` watch subcommand for a
 // hint.
 
+use std::usize;
+
 #[derive(Debug)]
 struct Person {
     name: String,
@@ -44,6 +46,16 @@ impl Default for Person {
 
 impl From<&str> for Person {
     fn from(s: &str) -> Person {
+        let fields : Vec<&str> =  s.split(",").collect();
+        if fields.len() != 2 {
+            return Person::default();
+        }
+        fields[1].parse::<usize>().map_or(Person::default(), |age| {
+            if fields[0].is_empty() {
+                return Person::default();
+            }
+            Person { name: fields[0].to_string(), age }
+        })
     }
 }
 
