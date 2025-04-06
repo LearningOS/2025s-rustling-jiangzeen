@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -29,13 +28,15 @@ struct LinkedList<T> {
     end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> {
+impl<T:PartialOrd + Clone> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T> LinkedList<T> 
+where T:PartialOrd + Clone
+{
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -71,13 +72,57 @@ impl<T> LinkedList<T> {
     }
 	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
 	{
-		//TODO
-		Self {
+		if list_a.length == 0 {
+            return list_b;
+        }
+        if list_b.length == 0 {
+            return list_a;
+        }
+		let mut ret = Self {
             length: 0,
             start: None,
             end: None,
-        }
+        };
+        let node_a = list_a.start;
+        let node_b = list_b.start;
+        LinkedList::merge_node(node_a, node_b, &mut ret);
+        ret
 	}
+
+    fn merge_node(node_a: Option<NonNull<Node<T>>>, node_b : Option<NonNull<Node<T>>>, ret: &mut LinkedList<T>) {
+        match node_a {
+            None => match node_b {
+                //判断node_b,如果None，直接返回
+                None => {},
+                Some(node_b_ptr) => {
+                    unsafe {
+                        ret.add((*node_b_ptr.as_ptr()).val.clone());
+                        LinkedList::merge_node(None, (*node_b_ptr.as_ptr()).next, ret);
+                    }
+                }
+            },
+            Some(node_a_ptr) => match node_b {
+                None => {
+                    unsafe {
+                        ret.add((*node_a_ptr.as_ptr()).val.clone());
+                        LinkedList::merge_node((*node_a_ptr.as_ptr()).next, None, ret);
+                    }
+                },
+                Some(node_b_ptr) => {
+                    unsafe {
+                        if (*node_a_ptr.as_ptr()).val >= (*node_b_ptr.as_ptr()).val {
+                            ret.add((*node_b_ptr.as_ptr()).val.clone());
+                            LinkedList::merge_node(Some(node_a_ptr), (*node_b_ptr.as_ptr()).next, ret);
+
+                        } else {
+                            ret.add((*node_a_ptr.as_ptr()).val.clone());
+                            LinkedList::merge_node((*node_a_ptr.as_ptr()).next, Some(node_b_ptr), ret);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 impl<T> Display for LinkedList<T>
